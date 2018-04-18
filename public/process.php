@@ -1,5 +1,6 @@
 <?php require_once('../private/initialize.php') ?>
 <?php
+  // Check the location user is on
   if(isset($_POST['page'])) {
     switch ($_POST['page']) {
       case 'home':
@@ -15,6 +16,11 @@
         home();
         break;
     }
+  }
+  
+  if(isset($_POST['event'])) {
+    //echo print_r($_POST['event']);
+    showTimes($_POST['event']);
   }
 ?>
 
@@ -120,24 +126,93 @@
   * events - populates times page with event data for chosen user
   */
   function times() {
+    
     $_SESSION['user'] = $_POST['user'];
+    $events = array();
+    
+    $eventSet = getEventList($_SESSION['user']);
+    if(!empty($eventSet)) {
+      if($eventSet->num_rows > 0) {
+        while($row = $eventSet->fetch_assoc()) {
+          $events[] = $row['event_name'];
+        }
+      }
+    }
+    
 ?>
   <hr>
   <div class="row">
     <h3>This is a page of times.</h3>
-    <table class="table">
-      <thead>
-        <th></th>
-      </thead>
-      <tbody>
-        <tr>
-        
-        </tr>
-      </tbody>
-      <tfoot>
-      </tfoot>
-    </table>
+  </div>
+  <div class="row">
+    <form class="form-inline">
+      <div class="form-group">
+        <label for="events">Events</label>
+        <select class="custom-select" name="events" id="events">
+          <option selected></option>
+          <?php 
+            foreach($events as $event) {
+              if(isset($_SESSION['user'])) {
+                echo '<option value="'.$event.'">'.$event.'</option>';
+              } else {
+                echo '<option value="'.$event.'">'.$event.'</option>';
+              }
+            }
+            
+            if(isset($_POST['user']) && !empty($_POST['user'])){
+              $_SESSION['user'] = $_POST['user'];
+            }
+          ?>
+          </select>
+        </div>
+    </form>
+  </div>
+  <hr>
+  <div class="row">
+    <div id="timeTable"></div>
   </div>
 <?php
+    
+  }
+  
+  function showTimes($event) {
+    $timeGoalSet = getMinutesSpent($event);
+    $timeSet = getTimeByEvent($event);
+    $htmlGoal = $htmlTime = $html = '';
+    
+    // Goal minutes
+    if($timeGoalSet->num_rows > 0) {
+      while($row = $timeGoalSet->fetch_assoc()) {
+        $actual = $row['actual'];
+        $goal = $row['goal'];
+      }
+      
+      $htmlGoal .='<table class="table">
+      <tr>
+        <td>Time Used (hr:min)</td>
+        <td>'.$actual.'</td>
+      </tr>
+      <tr>
+        <td>Goal Time (hr:min)</td>
+        <td>'.$goal.'</td>
+      </tr>
+      </table>';
+    }
+    
+    // Time records for an event
+    if($timeSet->num_rows > 0) {
+      $htmlTime .= '<table class="table"><thead><th>Time In</th><th>Time out</th></thead>';
+      while($row = $timeSet->fetch_assoc()) {
+        $htmlTime .= '<tr>
+          <td>'.$row["time_in"].'</td>
+          <td>'.$row["time_out"].'</td>
+        </tr>';
+      }
+      $htmlTime .= '</table>';
+    }
+    
+    $html .= $htmlGoal . $htmlTime;
+    
+    echo $html;
   }
 ?>

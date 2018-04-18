@@ -10,7 +10,7 @@
   */
 //  $_SESSION['user'] = 'hey';
 ?>
-<?php $pageTitle = ': Times';?>
+<?php $pageTitle = ': Events';?>
 <?php include( SHARED_PATH . '/header.php') ?>
     <input id="page" name="page" type="hidden" value="events">
     </form>

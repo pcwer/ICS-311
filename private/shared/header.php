@@ -46,7 +46,7 @@
 			</ul>    
 		</div>
     <form class="form-inline" name="user" method="post">
-      <select class="custom-select custom-select- bg-secondary text-white" name="user" id="user">
+      <select class="custom-select bg-secondary text-white" name="user" id="user">
         <option></option>
         <?php 
           foreach($names as $name) {
@@ -55,7 +55,6 @@
             } else {
               echo '<option value="'.$name.'">'.$name.'</option>';
             }
-            
           }
           
           if(isset($_POST['user']) && !empty($_POST['user'])){

@@ -9,7 +9,7 @@
   }
   /**
   * getNextBirthday: queries database to calculate days until next birthday.
-  * @param - $name: first name of person
+  * @param - $name: first and last name of person
   * @return - mysqli_result object with fields: name, birthday, days_until_bday
   */
   function getNextBirthday($name) {
@@ -42,6 +42,12 @@
     return $result;
   }
   
+  /**
+  * getEventInformation: query database to get event information
+  * @param - $name: first and last name of person
+  * @return - mysqli_result object with fields: event_name, event_description, goal_description,
+  *   start_date, end_date, goal_minutes, used_minutes, location_name
+  */
   function getEventInformation($name) {
     global $db;
     
@@ -68,6 +74,105 @@
     // Prepared statement ceremony
     if($statement = $db->prepare($query)) {
       $statement->bind_param("ss", $first, $last);
+      $statement->execute();
+      $result = $statement->get_result();
+      return $result;
+    } else {
+      $error = $db->errno . ' ' . $db->error;
+      echo $error;
+    }
+  }
+  
+  /**
+  * getEventList: query database to get an event list for a user
+  * @param - $name: first and last name of person
+  * @return - mysqli_result object with  fields: event_name
+  */
+  function getEventList($name) {
+    global $db;
+    
+    $nameParts = explode(' ', $name);
+    
+    // Check if name is empty
+    if(!empty($nameParts) && $nameParts[0] !== ''){
+      $first = "%".$nameParts[0]."%";
+      $last = "%".$nameParts[1]."%";
+    } else {
+      return;
+    }
+    
+    $query = "SELECT event_name 
+      FROM events
+      WHERE user_id IN (
+        SELECT user_id 
+        FROM users
+        WHERE first_name LIKE ?
+        AND last_name LIKE ?
+       )";
+     
+     // Prepared statement ceremony
+    if($statement = $db->prepare($query)) {
+      $statement->bind_param("ss", $first, $last);
+      $statement->execute();
+      $result = $statement->get_result();
+      return $result;
+    } else {
+      $error = $db->errno . ' ' . $db->error;
+      echo $error;
+    }
+  }
+  
+  function getTimeByEvent($event) {
+    global $db;
+    
+    $eventName = '%'.$event.'%';
+    
+    $query = "SELECT time_in, time_out
+    FROM times
+    WHERE event_id IN (
+      SELECT event_id
+      FROM events
+      WHERE event_name LIKE ?
+     )";
+     
+      // Prepared statement ceremony
+    if($statement = $db->prepare($query)) {
+      $statement->bind_param("s", $eventName);
+      $statement->execute();
+      $result = $statement->get_result();
+      return $result;
+    } else {
+      $error = $db->errno . ' ' . $db->error;
+      echo $error;
+    }
+  }
+  
+  function getMinutesSpent($event) {
+    global $db;
+    
+    $eventName = '%'.$event.'%';
+    
+    $query = "SELECT CONCAT(
+      FLOOR(u.duration / 60),
+      ':',
+      LPAD(u.duration % 60, 2, 0)
+      ) actual,
+    CONCAT(
+      FLOOR(g.duration / 60),
+      ':',
+      LPAD(g.duration % 60, 2 , 0)
+      ) goal
+    FROM used_time u 
+    JOIN goals g ON g.event_id = u.event_id
+    WHERE g.event_id IN (
+      SELECT event_id
+      FROM events
+      WHERE event_name LIKE ?
+      )";
+     
+      // Prepared statement ceremony
+    if($statement = $db->prepare($query)) {
+      $statement->bind_param("s", $eventName);
       $statement->execute();
       $result = $statement->get_result();
       return $result;

@@ -46,6 +46,26 @@
       }
     });
   });
+  
+  $('#main').click(function() {
+    $('#events').change(function() {
+      var file = location.pathname;
+      if(file.length !== 17) {
+        file += "../process.php";
+      } else {
+        file += "/process.php";
+      }
+      
+      $.ajax({
+        type: "POST",
+        url: file,
+        data: {'event': $(this).val()},
+        success: function(value) {
+          $('#timeTable').html(value);
+        }
+      });
+    });
+ });
 </script>
 </body>
 </html>
